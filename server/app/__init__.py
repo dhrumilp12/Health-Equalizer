@@ -6,7 +6,7 @@ import os
 # Load settings from the .env file
 load_dotenv()
 
-app = Flask(__name__, static_folder='../../client/build', static_url_path='/')
+app = Flask(__name__)
 @app.route('/')
 def index():
     return send_from_directory(app.static_folder, 'index.html')
