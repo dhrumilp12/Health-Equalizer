@@ -4,6 +4,7 @@ import openai
 import googlemaps
 from dotenv import load_dotenv
 import os
+from .speech_service import speech_to_text
 
 
 
@@ -14,6 +15,26 @@ google_maps_key = os.getenv("GOOGLE_MAPS_KEY")
 
 # Initialize Google Maps client
 gmaps = googlemaps.Client(key=google_maps_key)
+
+
+
+@app.route('/health_queries_audio', methods=['POST'])
+def health_queries_audio():
+     # Check if the part 'audio' is present in files
+        if 'audio' not in request.files:
+            return jsonify({'error': 'Audio file is required'}), 400
+        # Assume the voice data is sent as a file or binary data
+        voice_data = request.files['audio']
+
+        # Save the temporary audio file if needed or pass directly to the speech_to_text function
+        text_output = speech_to_text(voice_data)
+        
+        if text_output:
+            return jsonify({'message': text_output}), 200
+        else:
+            return jsonify({'error': 'Speech recognition failed'}), 400
+
+
 
 @app.route('/')
 def home():
@@ -41,18 +62,27 @@ def health_queries():
             return jsonify({"error": "Error processing your request"}), 500
     return "Send a POST request with a 'query' in JSON format."
 
-# Endpoint for Provider Locator
 @app.route('/providers', methods=['GET'])
 def providers():
     location = request.args.get('location', '')
     if not location:
         app.logger.warning("Location parameter missing for provider lookup")
         return jsonify({"error": "Location parameter is required."}), 400
+
+    # Ensure location is in the correct format if needed, e.g., "lat,lng"
+    try:
+        # Parsing to float to check format validity
+        lat, lng = map(float, location.split(','))
+    except ValueError:
+        app.logger.error("Location format is incorrect. Should be 'lat,lng'")
+        return jsonify({"error": "Location format is incorrect. Use 'lat,lng'"}), 400
+
     try:
         app.logger.info(f"Looking up providers near location: {location}")
-        result = gmaps.places_nearby(location=location, radius=5000, type='hospital')
+        # Make sure to send coordinates as a tuple of floats
+        result = gmaps.places_nearby(location=(lat, lng), radius=5000, type='hospital')
         app.logger.info(f"Received results: {result}")
-        return jsonify(result)
+        return jsonify(result['results'])  # Only send the results part if needed
     except Exception as e:
         app.logger.error(f"Error finding providers: {e}")
         return jsonify({"error": "Error finding healthcare providers"}), 500

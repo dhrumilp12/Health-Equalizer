@@ -1,12 +1,13 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Home from './components/Home';  // You need to create this component
-
+import HealthQuery from './components/HealthQuert';
+import ProvidersMap from './components/ProvidersMap';
 function App() {
   return (
     <Router>
       <div>
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<HealthQuery />} />
+          <Route path="/providers" element={<ProvidersMap />} />
         </Routes>
       </div>
     </Router>
