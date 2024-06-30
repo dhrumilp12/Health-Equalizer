@@ -36,6 +36,12 @@ def health_queries_audio():
 
 
 
+@app.route('/')
+def welcome():
+    # Simple welcome message when user hits the base URL
+    return jsonify({"message": "Welcome to the Health Assistant. Please submit your health-related questions via the /health_queries endpoint."})
+
+
 # Function to determine if the query is health-related
 @app.route('/health_queries', methods=['GET', 'POST'])
 def health_queries():

@@ -7,9 +7,7 @@ import os
 load_dotenv()
 
 app = Flask(__name__)
-@app.route('/')
-def index():
-    return send_from_directory(app.static_folder, 'index.html')
+
 
 app.config["MONGO_URI"] = os.environ.get("DB_CONNECTION_STRING")
 
