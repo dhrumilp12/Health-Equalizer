@@ -36,30 +36,32 @@ def health_queries_audio():
 
 
 
-@app.route('/')
-def home():
-    return "Welcome to the Health Equalizer API!"
-
-# Endpoint for Health Queries
+# Function to determine if the query is health-related
 @app.route('/health_queries', methods=['GET', 'POST'])
 def health_queries():
     if request.method == 'POST':
         user_query = request.json.get('query', '')
         if not user_query:
             return jsonify({"error": "Query is required"}), 400
+
+        prompt = f"Check if the following query is related to health issues: '{user_query}'. If it is, provide a detailed response. If not, kindly suggest the user to provide a health-related query."
         try:
             response = openai.Completion.create(
                 engine="gpt-3.5-turbo-instruct",
-                prompt=user_query,
-                max_tokens=150,
-                api_key=openai_api_key  # Ensure API key is used securely
+                prompt=prompt,
+                max_tokens=250,  # Increased token count for added context handling
+                api_key=openai_api_key
             )
-            return jsonify(response['choices'][0]['text'].strip())
+            ai_response = response['choices'][0]['text'].strip()
+            if "not related to health" in ai_response:
+                return jsonify({"error": "Query not related to health. Please submit a health-related query."}), 400
+            return jsonify(ai_response)
         except Exception as e:
             app.logger.error(f"Error processing health query: {e}")
             if "You exceeded your current quota" in str(e):
                 return jsonify({"error": "We have exceeded our AI service quota. Please try again later."}), 429
             return jsonify({"error": "Error processing your request"}), 500
+
     return "Send a POST request with a 'query' in JSON format."
 
 @app.route('/providers', methods=['GET'])
@@ -87,11 +89,5 @@ def providers():
         app.logger.error(f"Error finding providers: {e}")
         return jsonify({"error": "Error finding healthcare providers"}), 500
     
-# Endpoint for Emergency Services
-@app.route('/emergency', methods=['GET'])
-def emergency():
-    # Placeholder response, assuming implementation is pending
-    return "Emergency Services Locator is under development."
-
 if __name__ == '__main__':
     app.run(debug=True)

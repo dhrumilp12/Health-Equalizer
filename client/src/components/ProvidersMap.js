@@ -1,7 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { GoogleMap, LoadScript, Marker, InfoWindow, DirectionsRenderer } from '@react-google-maps/api';
-import { TextField, Button, Container, Box, Typography, Alert, Card, CardContent, CardMedia } from '@mui/material';
+import { FormControl, Select, MenuItem ,TextField, Button, Container, Box, Typography, Alert, Card, CardContent, CardMedia , Chip, Stack, Divider } from '@mui/material';
+import { Rating } from '@mui/material';
+import RateReviewIcon from '@mui/icons-material/RateReview';
+import DriveEtaIcon from '@mui/icons-material/DriveEta';  // Icon for Driving
+import DirectionsWalkIcon from '@mui/icons-material/DirectionsWalk';  // Icon for Walking
+import DirectionsBikeIcon from '@mui/icons-material/DirectionsBike';  // Icon for Bicycling
+import DirectionsTransitIcon from '@mui/icons-material/DirectionsTransit';  // Icon for Transit
 
 const containerStyle = {
   width: '100%',
@@ -22,6 +28,7 @@ const ProvidersMap = () => {
   const [error, setError] = useState('');
   const [userLocation, setUserLocation] = useState(null);
   const [directions, setDirections] = useState(null);
+  const [travelMode, setTravelMode] = useState('DRIVING');
   const apiKey = process.env.REACT_APP_GOOGLE_MAPS_KEY;
 
   useEffect(() => {
@@ -125,7 +132,7 @@ const ProvidersMap = () => {
             lat: provider.geometry.location.lat,
             lng: provider.geometry.location.lng
           },
-          travelMode: window.google.maps.TravelMode.DRIVING
+          travelMode: window.google.maps.TravelMode[travelMode]
         },
         (result, status) => {
           if (status === window.google.maps.DirectionsStatus.OK) {
@@ -152,6 +159,33 @@ const ProvidersMap = () => {
               onChange={handleLocationChange}
               style={{ marginRight: '10px', flexGrow: 1 }}
             />
+            
+  <FormControl variant="outlined" sx={{ width: 230, marginRight:1.5 }}>
+    <Select
+      value={travelMode}
+      onChange={(e) => setTravelMode(e.target.value)}
+      displayEmpty
+      inputProps={{ 'aria-label': 'Without label' }}
+      renderValue={(selected) => {
+        if (selected === 'DRIVING') {
+          return <Box sx={{ display: 'flex', alignItems: 'center' }}><DriveEtaIcon sx={{ mr: 1 }} /> Driving</Box>;
+        } else if (selected === 'WALKING') {
+          return <Box sx={{ display: 'flex', alignItems: 'center' }}><DirectionsWalkIcon sx={{ mr: 1 }} /> Walking</Box>;
+        } else if (selected === 'BICYCLING') {
+          return <Box sx={{ display: 'flex', alignItems: 'center' }}><DirectionsBikeIcon sx={{ mr: 1 }} /> Bicycling</Box>;
+        } else if (selected === 'TRANSIT') {
+          return <Box sx={{ display: 'flex', alignItems: 'center' }}><DirectionsTransitIcon sx={{ mr: 1 }} /> Transit</Box>;
+        }
+        return <Box sx={{ display: 'flex', alignItems: 'center' }}><DriveEtaIcon sx={{ mr: 1 }} /> Select Mode</Box>;
+      }}
+    >
+      <MenuItem value="DRIVING"><DriveEtaIcon sx={{ mr: 1 }} />Driving</MenuItem>
+      <MenuItem value="WALKING"><DirectionsWalkIcon sx={{ mr: 1 }} />Walking</MenuItem>
+      <MenuItem value="BICYCLING"><DirectionsBikeIcon sx={{ mr: 1 }} />Bicycling</MenuItem>
+      <MenuItem value="TRANSIT"><DirectionsTransitIcon sx={{ mr: 1 }} />Transit</MenuItem>
+    </Select>
+  </FormControl>
+
             <Button type="submit" variant="contained" color="primary" disabled={loading}>
               {loading ? 'Loading...' : 'Search'}
             </Button>
@@ -192,28 +226,38 @@ const ProvidersMap = () => {
                     />
                   )}
                   <CardContent>
-                    <Typography variant="h6" component="div">
-                      {selectedProvider.name}
-                    </Typography>
-                    <Typography variant="body2" color="textSecondary">
-                      Address: {selectedProvider.vicinity}
-                    </Typography>
-                    <Typography variant="body2" color="textSecondary">
-                      Rating: {selectedProvider.rating}
-                    </Typography>
-                    <Typography variant="body2" color="textSecondary">
-                      User Ratings Total: {selectedProvider.user_ratings_total}
-                    </Typography>
-                    {selectedProvider.opening_hours && selectedProvider.opening_hours.open_now !== undefined && (
-                      <Typography variant="body2" color="textSecondary">
-                        Open Now: {selectedProvider.opening_hours.open_now ? 'Yes' : 'No'}
-                      </Typography>
+                  <Typography gutterBottom variant="h5" component="div" style={{ color: '#1976d2' }}>
+                  {selectedProvider.name}
+                </Typography>
+                <Typography variant="body2" color="textSecondary" component="p" style={{ fontSize: '0.875rem', margin: '5px 0' }}>
+                  Address: {selectedProvider.vicinity}
+                </Typography>
+                {selectedProvider.phone_number && (
+                  <Typography variant="body2" color="textSecondary" component="p" style={{ fontWeight: 'bold' }}>
+                    Phone: <span style={{ fontWeight: 'normal' }}>{selectedProvider.phone_number}</span>
+                  </Typography>
+                )}
+                <Divider style={{ margin: '10px 0' }} />
+                <Typography variant="body2" color="textSecondary" component="p" style={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', marginBottom: 8 }}>
+                Rating:<Rating value={selectedProvider.rating} precision={0.5} readOnly size="small" />
+                <span style={{ marginLeft: 8 }}>{selectedProvider.rating}</span>
+              </Typography>
+              <Typography variant="body2" color="textSecondary" component="p" style={{ fontWeight: 'bold' }}>
+                Reviews: <span style={{ fontWeight: 'normal' }}>{selectedProvider.user_ratings_total} <RateReviewIcon style={{ color: '#1976d2' }} /></span> 
+              </Typography>
+
+                    {selectedProvider.opening_hours && (
+                      <Chip
+                        label={selectedProvider.opening_hours.open_now ? 'Open Now' : 'Closed'}
+                        color={selectedProvider.opening_hours.open_now ? 'success' : 'error'}
+                        style={{ marginTop: '5px' }}
+                      />
                     )}
-                    {selectedProvider.types && (
-                      <Typography variant="body2" color="textSecondary">
-                        Types: {selectedProvider.types.join(', ')}
-                      </Typography>
-                    )}
+                    <Stack direction="row" spacing={1} style={{ marginTop: '10px' }}>
+                      {selectedProvider.types.map((type, index) => (
+                        <Chip key={index} label={type} variant="outlined" />
+                      ))}
+                    </Stack>
                   </CardContent>
                 </Card>
               </InfoWindow>

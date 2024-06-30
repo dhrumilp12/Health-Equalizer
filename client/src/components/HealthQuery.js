@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import { Box, TextField, Typography, Snackbar, IconButton, InputAdornment, Card, CardContent, Divider, CircularProgress, Button } from '@mui/material';
 import MuiAlert from '@mui/material/Alert';
@@ -6,7 +6,8 @@ import SendIcon from '@mui/icons-material/Send';
 import MicIcon from '@mui/icons-material/Mic';
 import MicOffIcon from '@mui/icons-material/MicOff';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
-import backgroundImg from './images/logo.png'; // Replace with your actual image URL
+import backgroundImg from './images/logo.png'; 
+
 // Custom Theme
 const theme = createTheme({
   palette: {
@@ -76,12 +77,24 @@ const HealthQueryComponent = () => {
     const [snackbarMessage, setSnackbarMessage] = useState('');
     const [snackbarSeverity, setSnackbarSeverity] = useState('info');
     const audioChunksRef = useRef([]);
+    
+
+    // Fetch the welcome message on component mount
+    useEffect(() => {
+      
+        setMessages([{ message: 'Welcome to the Health Assistant.Please submit your health-related questions.', sender: 'system' }]);
+    }, []);
 
     const handleInputChange = (event) => setInput(event.target.value);
     const handleSnackbarClose = () => setOpenSnackbar(false);
 
     const sendMessage = async () => {
-        if (!input.trim()) return;
+      if (!input.trim()) {
+        setSnackbarMessage('Please enter a message.');
+        setSnackbarSeverity('info');
+        setOpenSnackbar(true);
+        return;
+    }
         setIsLoading(true);
         try {
             const response = await axios.post('/health_queries', { query: input }, {
@@ -138,20 +151,22 @@ const HealthQueryComponent = () => {
         setIsLoading(true);
         const formData = new FormData();
         formData.append('audio', audioBlob);
-        axios.post('/health_queries_audio', formData, {
-            headers: { 'Content-Type': 'multipart/form-data' }
-        }).then(response => {
-            const { message } = response.data;
-            setInput(message);  // Display the transcribed message in the input field for editing or confirmation before sending
-        }).catch(error => {
-            console.error('Error uploading audio:', error);
-            setSnackbarMessage('Failed to send audio.');
-            setSnackbarSeverity('error');
-            setOpenSnackbar(true);
-        }).finally(() => {
-            setIsLoading(false);
-        });
-    };
+        try {
+          const response = await axios.post('/health_queries_audio', formData, {
+              headers: { 'Content-Type': 'multipart/form-data' }
+          });
+          const { message } = response.data;
+          setInput(message); // Display the transcribed message in the input field for editing or confirmation before sending
+          setIsRecording(false); // Ensure recording is marked as stopped so the input can be edited
+      } catch (error) {
+          console.error('Error uploading audio:', error);
+          setSnackbarMessage('Failed to send audio.');
+          setSnackbarSeverity('error');
+          setOpenSnackbar(true);
+      } finally {
+          setIsLoading(false); // Ensure loading is set to false to re-enable editing
+      }
+  };
 
     // Function to check supported MIME types for recording
     const getSupportedMimeType = () => {
@@ -169,7 +184,7 @@ const HealthQueryComponent = () => {
           <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
               <Card sx={{ width: '100%', maxWidth: 600, boxShadow: 3, borderRadius: 2 ,}}>
               <CardContent sx={{
-                    height: '80vh',
+                    height: '68vh',
                     overflow: 'auto',
                     position: 'relative', // Needed for positioning the pseudo-element correctly
                     padding: 2,
@@ -188,7 +203,7 @@ const HealthQueryComponent = () => {
                         backgroundSize: 'cover',
                         backgroundPosition: 'center',
                         backgroundRepeat: 'no-repeat',
-                        opacity: 0.3, // Adjust opacity to your liking
+                        opacity: 0.1, // Adjust opacity to your liking
                         
                     }
                     }}>  
@@ -215,7 +230,7 @@ const HealthQueryComponent = () => {
                           placeholder="Type your message here or use the mic to record"
                           value={input}
                           onChange={handleInputChange}
-                          disabled={isLoading || isRecording}
+                          disabled={isLoading && isRecording}
                           InputProps={{
                               endAdornment: (
                                   <InputAdornment position="end">
@@ -238,7 +253,7 @@ const HealthQueryComponent = () => {
                           color="primary"
                           onClick={sendMessage}
                           disabled={isLoading || !input.trim()}
-                          endIcon={<SendIcon />}
+                          endIcon={!isLoading ? <SendIcon /> : <CircularProgress size={24} style={{ color: 'white' }} />}
                           sx={{ ml: 2 }}
                       >
                           Send

@@ -6,12 +6,22 @@ import { GlobalStateProvider } from './context/globalState';
 
 const initialState = {}; // Define your initial state here
 const reducer = (state, action) => {
-  // Define your reducer to handle actions
   switch (action.type) {
+    case 'SET_USER':
+      return {
+        ...state,
+        user: action.payload
+      };
+    case 'UPDATE_SCORE':
+      return {
+        ...state,
+        score: action.payload
+      };
     default:
       return state;
   }
 };
+
 
 ReactDOM.render(
   <React.StrictMode>
