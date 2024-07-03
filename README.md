@@ -14,9 +14,9 @@ Our team developed **Health Equalizer** using a combination of **Python with Fla
 ## Export the Application
 1. Clone the repo
 ```
-https://github.com/janthonysantana/Mental-Health-Companion.git
+https://github.com/dhrumilp12/Health-Equalizer.git
 ```
-3. Setup the frontend environment with PIP
+3. Setup the backend environment with PIP
 ```
 cd ./server
 pip install -r requirements.txt
