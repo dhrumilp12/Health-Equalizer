@@ -1,4 +1,5 @@
 # Health Equalizer
+## Created with ❤️ by Dhrumil
 `Dhrumil Patel - Full Stack Developer & Software Engineer`<br>
 
 ## How we built it
@@ -39,4 +40,4 @@ npm start
 npm run build
 ```
 
-## Created with ❤️ by Dhrumil
+
